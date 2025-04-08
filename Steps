@@ -1,0 +1,176 @@
+# Complete Setup and Usage Guide for Smart Market Analyzer
+
+Here's a step-by-step guide to set up, execute, and use the Smart Market Analyzer trading system.
+
+## Step 1: Environment Setup
+
+1. **Create project directory and clone files**:
+   ```bash
+   mkdir -p smart-market-analyzer
+   cd smart-market-analyzer
+   ```
+
+2. **Save each of the Python files** in the main directory:
+   - data_service.py
+   - model_service.py
+   - signal_service.py
+   - backtest_service.py
+   - portfolio_manager.py
+   - ninja_trader_client.py
+   - trade_executor.py
+   - multi_market_manager.py
+   - worker.py
+   - main.py
+   - __init__.py
+
+3. **Install required dependencies**:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+## Step 2: Configuration
+
+1. **Create a configuration file** `config.json`:
+   ```bash
+   touch config.json
+   ```
+
+2. **Add basic configuration**:
+   ```json
+   {
+     "instrument": "NQ",
+     "price_model": "Transformer",
+     "pattern_model": "CNN",
+     "timeframe": "1-minute",
+     "window_size": 60,
+     "bins": 10,
+     "num_heads": 4,
+     "d_model": 64,
+     "split": {"train": 0.7, "val": 0.15, "test": 0.15},
+     "sample_rate": "1-minute",
+     "entropy_threshold": 0.75,
+     "strategy": {
+       "stop_loss": {"type": "ATR", "multiplier": 2, "period": 14},
+       "profit_take": {"type": "Fibonacci", "level": 0.618},
+       "entry": {"condition": "signal == 'Buy'"},
+       "exit": {"condition": "signal == 'Sell'"}
+     },
+     "slippage": 0.001,
+     "max_position": 0.02,
+     "max_daily_loss": 0.05
+   }
+   ```
+
+3. **Create data directories**:
+   ```bash
+   mkdir -p data/market data/models data/backtest logs
+   ```
+
+## Step 3: Running in Development Mode
+
+1. **Start the FastAPI application**:
+   ```bash
+   uvicorn main:app --reload
+   ```
+
+2. **Access the API documentation**:
+   - Open your browser and go to `http://localhost:8000/docs`
+
+## Step 4: Basic Usage Workflow
+
+1. **Process historical data**:
+   - Upload sample data or generate mock data:
+     ```bash
+     curl -X POST "http://localhost:8000/data" -H "Content-Type: application/json" -d '{"csv_path": "data/sample.csv"}'
+     ```
+
+2. **Check training status**:
+   ```bash
+   curl "http://localhost:8000/training-status"
+   ```
+
+3. **Generate predictions**:
+   ```bash
+   curl -X POST "http://localhost:8000/predict" -H "Content-Type: application/json" -d '{"data": [{"Open": 4323.5, "High": 4323.75, "Low": 4323.25, "Close": 4323.5, "Volume": 19, "EMA9": 4323.66, "EMA21": 4322.29, "EMA220": 4318.87}, ...], "window_size": 60}'
+   ```
+
+4. **Generate trading signals**:
+   ```bash
+   curl -X POST "http://localhost:8000/signal" -H "Content-Type: application/json" -d '{"prediction": {"price_prediction": [4324.0], "pattern": [2], "pattern_labels": ["Positive"], "entropy": [0.6], "confidence": [0.9]}, "latest_candle": {"Close": 4323.5, "Volume": 19, "EMA9": 4323.66, "EMA21": 4322.29, "EMA220": 4318.87}}'
+   ```
+
+5. **Run backtesting**:
+   ```bash
+   curl -X POST "http://localhost:8000/backtest"
+   ```
+
+## Step 5: Docker Deployment (Production)
+
+1. **Build and run with Docker Compose**:
+   ```bash
+   docker-compose up -d
+   ```
+
+2. **Monitor the application**:
+   - API: `http://localhost:8000/docs`
+   - Grafana: `http://localhost:3000` (admin/smartmarket)
+   - Prometheus: `http://localhost:9090`
+
+3. **Check logs**:
+   ```bash
+   docker-compose logs -f api
+   docker-compose logs -f worker
+   ```
+
+## Step 6: Using for Real Trading
+
+1. **Configure NinjaTrader integration**:
+   - Update `config.json` with your NinjaTrader API credentials
+   - Set trading hours and risk parameters
+
+2. **Start the worker process**:
+   ```bash
+   python worker.py
+   ```
+
+3. **Monitor trade execution**:
+   - Check logs for trade execution: `tail -f logs/worker.log`
+   - View portfolio status: 
+     ```bash
+     curl "http://localhost:8000/portfolio/status"
+     ```
+
+4. **Review trading performance**:
+   - Access Grafana dashboards for performance metrics
+   - View backtest results in the API
+
+## Step 7: Customization
+
+1. **Adjust model parameters** in `config.json`:
+   - Change `window_size` for different prediction timeframes
+   - Modify `entropy_threshold` to control signal confidence
+
+2. **Configure risk parameters**:
+   - Update `max_position` for position sizing (% of capital)
+   - Adjust `stop_loss` and `profit_take` settings
+
+3. **Add more instruments**:
+   ```bash
+   curl -X POST "http://localhost:8000/instruments/add" -H "Content-Type: application/json" -d '{"instrument": "AAPL", "config": {"enabled": true}}'
+   ```
+
+## Troubleshooting
+
+1. **Model training issues**:
+   - Check logs: `cat logs/app.log`
+   - Verify input data format matches expected format
+
+2. **API connection issues**:
+   - Ensure all services are running: `docker-compose ps`
+   - Check network settings in Docker Compose file
+
+3. **Trade execution failures**:
+   - Verify NinjaTrader connection: `curl "http://localhost:8000/health"`
+   - Check authentication status in logs
+
+This guide covers the basic setup and usage workflow. For more detailed configuration and advanced features, refer to the `PRODUCTION_README.md` documentation.

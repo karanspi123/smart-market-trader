@@ -1,0 +1,45 @@
+{
+    "data": {
+      "csv_path": "data/nq_1min.csv",
+      "instrument": "NQ",
+      "split": {
+        "train": 0.7,
+        "val": 0.15,
+        "test": 0.15
+      },
+      "sample_rate": "1-minute"
+    },
+    "model": {
+      "price_model": "Transformer",
+      "pattern_model": "CNN",
+      "timeframe": "1-minute",
+      "window_size": 60,
+      "bins": 10,
+      "num_heads": 4,
+      "d_model": 64,
+      "entropy_threshold": 0.75
+    },
+    "backtest": {
+      "strategy": {
+        "stop_loss": {
+          "type": "ATR",
+          "multiplier": 2,
+          "period": 14
+        },
+        "profit_take": {
+          "type": "Fibonacci",
+          "level": 0.618
+        },
+        "entry": {
+          "condition": "signal == 'Buy'"
+        },
+        "exit": {
+          "condition": "signal == 'Sell'"
+        }
+      },
+      "slippage": 0.001,
+      "trade_cost": 2.0,
+      "max_position": 0.02,
+      "max_daily_loss": 0.05
+    }
+  }
